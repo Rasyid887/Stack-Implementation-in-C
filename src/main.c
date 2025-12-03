@@ -67,6 +67,10 @@ bool stack_delete(Stack *stack) {
     return 1;
 }
 
-bool is_full(Stack *stack) { return stack->capacity == stack->size; }
+bool is_full(Stack *stack) {
+    return stack->capacity == stack->size;
+}
 
-bool is_empty(Stack *stack) { return stack->size == 0; }
+bool is_empty(Stack *stack) {
+    return stack->size == 0;
+}

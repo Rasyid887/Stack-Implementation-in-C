@@ -6,7 +6,7 @@ UseTab: Never
 
 # '{' stays on the right side
 BreakBeforeBraces: Attach   
-AllowShortFunctionsOnASingleLine: All
+AllowShortFunctionsOnASingleLine: None
 
 # '=' is aligned
 AlignConsecutiveAssignments: true 
