@@ -1,0 +1,22 @@
+BasedOnStyle: LLVM
+
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+
+# '{' stays on the right side
+BreakBeforeBraces: Attach   
+AllowShortFunctionsOnASingleLine: All
+
+# '=' is aligned
+AlignConsecutiveAssignments: true 
+
+# type + name to be neat 
+AlignConsecutiveDeclarations: true  
+
+# max column limit
+ColumnLimit: 200   
+
+# char *x, not char* x
+PointerAlignment: Right   
+SpaceBeforeParens: ControlStatements
