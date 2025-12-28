@@ -49,6 +49,10 @@ int main() {
     int   argc;
 
     while (!is_exit) {
+        puts("\n================================================");
+        puts("============= Stack Implementation =============");
+        puts("================================================\n");
+
         printf("Enter your stack capacity = ");
         fgets(input_capacity, sizeof(input_capacity), stdin);
         input_capacity[strcspn(input_capacity, "\n")] = '\0';
