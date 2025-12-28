@@ -4,131 +4,78 @@
 #include <string.h>
 
 typedef struct {
-    int *collection;
+    int *data;
     int  capacity;
-    int  size;
+    int  top;
 } Stack;
 
-typedef bool (*CommandFunc)(int argc, char *argv[]);
+typedef bool (*Commandfunc)(int argc, char *argv[], Stack *stack);
 
 typedef struct {
-    const char *name;
-    CommandFunc func;
-    const char *desc;
+    char       *name;
+    Commandfunc func;
+    char       *desc;
 } Command;
 
 Stack *stack_init(int capacity);
-bool   is_empty(Stack *stack);
 bool   is_full(Stack *stack);
-bool   stack_push(Stack *stack, int data);
-bool   stack_pop(Stack *stack, int *data);
-bool   stack_peek(Stack *stack, int *data);
+bool   is_empty(Stack *stack);
+bool   cmd_push(int argc, char *argv[], Stack *stack);
+bool   cmd_pop(int argc, char *argv[], Stack *stack);
+bool   cmd_peek(int argc, char *argv[], Stack *stack);
+bool   cmd_help(int argc, char *argv[], Stack *stack);
+bool   cmd_show(int argc, char *argv[], Stack *stack);
+bool   cmd_capacity(int argc, char *argv[], Stack *stack);
+bool   cmd_exit(int argc, char *argv[], Stack *stack);
+int    cmd_parsing(char *command, char *argv[]);
 
-bool stack_help(int argc, char *argv[]);
+Command commands[] = {{"push", cmd_push, "Push data to stack"},
+                      {"pop", cmd_pop, "Pop data from stack"},
+                      {"peek", cmd_peek, "Get the top data from stack"},
+                      {"help", cmd_help, "Shows the list of commands available"},
+                      {"show", cmd_show, "Show the stack's data"},
+                      {"capacity", cmd_capacity, "Show the stack's capacity"},
+                      {"exit", cmd_exit, "Exit"}};
 
-Command commands[] = {{"help", stack_help, "Shows the list of available commands."},
-                      {"stack_push", stack_push, "Push value to stack"}};
-
-const int commands_count = sizeof(commands) / sizeof(commands[0]);
-
-int parse_input(char *input, char *argv[]) {
-    int argc = 0;
-
-    char *token = strtok(input, " ");
-    while (token != NULL) {
-        argv[argc++] = token;
-        token        = strtok(NULL, " ");
-    }
-    return argc;
-}
+bool is_exit        = false;
+int  commands_count = sizeof(commands) / sizeof(commands[0]);
 
 int main() {
-    char  capacity_input[50];
-    char  command[50];
-    char *end;
-    int   capacity;
-    int   action;
-    bool  is_exit1 = false;
-    bool  is_exit2 = false;
-    int   data1, data2;
+    char  input_capacity[50];
+    char  input_command[50];
+    char *argv[5];
+    char *end_capacity;
+    int   int_capacity;
+    int   argc;
 
-    CommandFunc stack_help = stack_help;
+    while (!is_exit) {
+        printf("Enter your stack capacity = ");
+        fgets(input_capacity, sizeof(input_capacity), stdin);
+        input_capacity[strcspn(input_capacity, "\n")] = '\0';
+        int_capacity                                  = strtol(input_capacity, &end_capacity, 10);
 
-    while (!is_exit1) {
-        char *argv[10];
-        int   argc;
-
-        puts("\n================================================");
-        puts("============= Stack Implementation =============");
-        puts("================================================\n");
-
-        printf("Enter stack's capacity = ");
-        fgets(capacity_input, sizeof(capacity_input), stdin);
-        capacity_input[strcspn(capacity_input, "\n")] = '\0';
-        capacity                                      = strtol(capacity_input, &end, 10);
-
-        if (end == capacity_input || *end != '\0') {
-            puts("Error: invalid capacity input.");
-            return 1;
+        if (int_capacity < 0 || *end_capacity != '\0' || end_capacity == input_capacity) {
+            printf("Error : invalid input capacity\n");
+            continue;
         }
 
-        if (capacity <= 0) {
-            puts("Error: capacity out of range.");
-            return 1;
-        }
+        Stack *stack = stack_init(int_capacity);
 
-        Stack *stack = stack_init(capacity);
+        printf("You have stack of size %d, what would you want to do? \n", int_capacity);
 
-        if (stack == NULL) {
-            puts("Error: stack init");
-            return 1;
-        }
+        while (!is_exit) {
+            printf(">> ");
 
-        printf("You have stack of size %d, what would you want to do? \n", capacity);
-        printf(">> ");
-        fgets(command, sizeof(command), stdin);
-        command[strcspn(command, "\n")] = '\0';
+            fgets(input_command, sizeof(input_command), stdin);
+            input_command[strcspn(input_command, "\n")] = '\0';
 
-        argc = parse_input(command, argv); //
-
-        for (int i = 0; i < 3; i++) {
-            if (strcmp(argv[0], commands[i].name) == 0) {
-                commands[i].func(argc, argv);
-                break;
+            argc = cmd_parsing(input_command, argv);
+            for (int i = 0; i < commands_count; i++) {
+                if (strcmp(argv[0], commands[i].name) == 0) {
+                    commands[i].func(argc, argv, stack);
+                }
             }
         }
-
-        // if (strcmp(argv[0], "help") == 0) {
-        //     stack_help(argc, argv);
-        // }
-
-        // printf("Stack's data = ");
-        // for (int i = 0; i < stack->size; i++) {
-        //     printf("%d, ", stack->collection[i]);
-        // }
-        // printf("\n");
-
-        // stack_push(stack, 10);
-        // stack_push(stack, 11);
-        // stack_push(stack, 12);
-
-        // stack_pop(stack, &data1);
-
-        // for (int i = 0; i < stack->size; i++) {
-        //     printf("data %d = %d\n", i + 1, stack->collection[i]);
-        // }
-
-        // if (is_full(stack)) {
-        //     puts("Stack is full");
-        // } else {
-        //     puts("Stack isn't full");
-        // }
-
-        // stack_peek(stack, &data2);
-
-        // printf("Last data on the stack = %d\n", data2);
-
-        is_exit1 = true;
     }
 
     return 0;
@@ -136,73 +83,120 @@ int main() {
 
 Stack *stack_init(int capacity) {
     Stack *stack = malloc(sizeof(Stack));
-
     if (stack == NULL) {
         return NULL;
     }
 
-    stack->collection = malloc(sizeof(int) * capacity);
-
-    if (stack->collection == NULL) {
+    stack->data = malloc(sizeof(Stack) * capacity);
+    if (stack->data == NULL) {
         free(stack);
         return NULL;
     }
 
     stack->capacity = capacity;
-    stack->size     = 0;
+    stack->top      = 0;
 
     return stack;
 }
 
-bool stack_help(int argc, char *argv[]) {
-    (void)argc; // avoid warnings
-    (void)argv;
-
-    printf("Available commands:\n");
-    printf("  stack_help            : Tampilkan bantuan\n");
-    printf("  stack_push <value>    : Push nilai ke stack\n");
-    printf("  stack_pop             : Pop nilai dari stack\n");
-    printf("  exit                  : Keluar program\n");
-
-    return true;
+bool is_full(Stack *stack) {
+    return stack->top == stack->capacity;
 }
 
 bool is_empty(Stack *stack) {
-    return stack->size == 0;
+    return stack->top == 0;
 }
 
-bool is_full(Stack *stack) {
-    return stack->size == stack->capacity;
-}
+bool cmd_push(int argc, char *argv[], Stack *stack) {
+    char *end_data;
+    int   data = strtol(argv[1], &end_data, 10);
 
-bool stack_push(Stack *stack, int data) {
+    if (*end_data != '\0' || argv[1] == end_data || data < 0) {
+        printf("Error : invalid value\n");
+
+        return false;
+    }
+
     if (is_full(stack)) {
+        printf("Error : stack is full\n");
+
         return false;
     }
 
-    stack->collection[stack->size] = data;
-    stack->size++;
+    stack->data[stack->top] = data;
+    stack->top++;
+    printf("Push operation success : %d has been added to the top of the stack.\n", data);
 
     return true;
 }
 
-bool stack_pop(Stack *stack, int *data) {
+bool cmd_pop(int argc, char *argv[], Stack *stack) {
     if (is_empty(stack)) {
+        printf("Error : stack is empty\n");
+
         return false;
     }
 
-    stack->size--;
-    *data = stack->collection[stack->size];
+    stack->top--;
+    printf("Pop operation success : %d has been removed from the top of the stack.\n", stack->data[stack->top]);
 
     return true;
 }
 
-bool stack_peek(Stack *stack, int *data) {
-    if (is_empty(stack)) {
-        return false;
-    }
-
-    *data = stack->collection[stack->size - 1];
+bool cmd_peek(int argc, char *argv[], Stack *stack) {
+    printf("Top element of the stack : %d\n", stack->data[stack->top - 1]);
 
     return true;
+}
+
+bool cmd_help(int argc, char *argv[], Stack *stack) {
+    int i = 0;
+
+    printf("Available commands : \n");
+    printf("   push {data}   : %s\n", commands[i++].desc);
+    printf("   pop           : %s\n", commands[i++].desc);
+    printf("   peek          : %s\n", commands[i++].desc);
+    printf("   help          : %s\n", commands[i++].desc);
+    printf("   show          : %s\n", commands[i++].desc);
+    printf("   capacity      : %s\n", commands[i++].desc);
+    printf("   exit          : %s\n", commands[i++].desc);
+
+    return true;
+}
+
+bool cmd_show(int argc, char *argv[], Stack *stack) {
+    printf("Stack's data : ");
+
+    for (int i = 0; i < stack->top; i++) {
+        printf("%d ", stack->data[i]);
+    }
+    printf("\n");
+
+    return true;
+}
+
+bool cmd_capacity(int argc, char *argv[], Stack *stack) {
+    printf("Stack's capacity : %d\n", stack->capacity);
+
+    return true;
+}
+
+bool cmd_exit(int argc, char *argv[], Stack *stack) {
+    is_exit = true;
+
+    printf("Thank you for using this program.\n");
+
+    return true;
+}
+
+int cmd_parsing(char *command, char *argv[]) {
+    int   argc  = 0;
+    char *token = strtok(command, " ");
+
+    while (token != NULL) {
+        argv[argc++] = token;
+        token        = strtok(NULL, " ");
+    }
+
+    return argc;
 }
