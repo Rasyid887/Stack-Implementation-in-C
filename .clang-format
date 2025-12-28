@@ -7,6 +7,8 @@ UseTab: Never
 # '{' stays on the right side
 BreakBeforeBraces: Attach   
 AllowShortFunctionsOnASingleLine: None
+BinPackArguments: false
+BinPackParameters: false
 
 # '=' is aligned
 AlignConsecutiveAssignments: true 
